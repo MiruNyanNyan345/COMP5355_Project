@@ -18,8 +18,9 @@ def getTop200Websites():
     table = df[0]
 
     # get top 250 websites from table
-    top200_websites = table[:10]
+    top200_websites = table[:240]
 
     top200_websites.to_csv('top200.csv', index=False)
+    # top200_websites.to_excel('top240.xlsx', index=False)
 
     return top200_websites

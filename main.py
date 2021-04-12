@@ -16,11 +16,17 @@ from mozprofile import FirefoxProfile
 import webslist_crawler
 import analysis
 
-top_200 = webslist_crawler.getTop200Websites()
+# top_200 = webslist_crawler.getTop200Websites()
+
+top_200 = pd.read_excel("top240.xlsx")
 
 
 def unixToDT(ts_epoch):
-    return datetime.datetime.fromtimestamp(ts_epoch)
+    try:
+        return True, datetime.datetime.fromtimestamp(ts_epoch)
+    except ValueError as e:
+        print(e)
+        return False, -1
 
 
 def merge_cookies_dict(cookies_lst1, cookies_lst2):
@@ -101,8 +107,10 @@ def get_cookies(web_addr):
         driver.close()
 
         final_cookies = merge_cookies_dict(selenium_cookies, sqlite3_cookies)
+        # print(final_cookies)
         # for cookie in final_cookies:
         #     print("Final Cookie: ({}): {}".format(web_addr, cookie))
+        # print(final_cookies)
         print("")
     except Exception as e:
         print("Website: {}, Error: {}".format(web, e))
@@ -133,6 +141,8 @@ def main():
                                             "expiryGrade",
                                             "avgGrade"])
     for web in tqdm(top_200["Root Domain"]):
+        print("")
+        print(web)
         status, results = get_cookies(web)
         if status:
             for result in results:
@@ -140,13 +150,24 @@ def main():
                 # composeDict.update({"website": web, "status": status, "creation": datetime.datetime.now().timestamp()})
                 composeDict.update(result)
                 if "expiry" in result.keys():
-                    intervalSeconds = (unixToDT(result["expiry"]) - datetime.datetime.now().replace(
-                        microsecond=0)).total_seconds()
-                    composeDict.update(
-                        {"website": web, "status": status, "creation": datetime.datetime.now().replace(microsecond=0),
-                         "expiry": unixToDT(result["expiry"]),
-                         "cookieType": "persistent",
-                         "cookieTotalSeconds": intervalSeconds})
+                    # if the cookie expiry data is out of range
+                    # which means that cookie will be removed when the browser is closed
+                    result, cookieExpSeconds = unixToDT(result["expiry"])
+                    if result:
+                        intervalSeconds = (cookieExpSeconds - datetime.datetime.now().replace(
+                            microsecond=0)).total_seconds()
+                        composeDict.update(
+                            {"website": web, "status": status,
+                             "creation": datetime.datetime.now().replace(microsecond=0),
+                             "expiry": cookieExpSeconds,
+                             "cookieType": "persistent",
+                             "cookieTotalSeconds": intervalSeconds})
+                    else:
+                        # assume that cookie is session cookie
+                        composeDict.update(
+                            {"website": web, "status": status,
+                             "creation": datetime.datetime.now().replace(microsecond=0),
+                             "expiry": None, "cookieType": "session"})
                 else:
                     composeDict.update(
                         {"website": web, "status": status, "creation": datetime.datetime.now().replace(microsecond=0),
@@ -155,12 +176,22 @@ def main():
         else:
             top200_cookies_df = top200_cookies_df.append({"website": web,
                                                           "status": status,
-                                                          "exception": results})
+                                                          "exception": results}, ignore_index=True)
+            continue
 
-        analysis_result = analysis.cookies_analysis(website=web,
-                                                    web_rows=top200_cookies_df.loc[top200_cookies_df['website'] == web])
-        analysis_result.update({"website": web})
-        top200_grade_df = top200_grade_df.append(analysis_result, ignore_index=True)
+        if top200_cookies_df.loc[top200_cookies_df['website'] == web].empty:
+            top200_grade_df = top200_grade_df.append({"website": web,
+                                                      "domainGrade": None,
+                                                      "httpOnlyGrade": None,
+                                                      "secureGrade": None,
+                                                      "expiryGrade": None,
+                                                      "avgGrade": None}, ignore_index=True)
+        else:
+            analysis_result = analysis.cookies_analysis(website=web,
+                                                        web_rows=top200_cookies_df.loc[
+                                                            top200_cookies_df['website'] == web])
+            analysis_result.update({"website": web})
+            top200_grade_df = top200_grade_df.append(analysis_result, ignore_index=True)
 
     top200_cookies_df.to_csv('top200_cookies.csv', index=False)
     top200_grade_df.to_csv('top200_grade.csv', index=False)

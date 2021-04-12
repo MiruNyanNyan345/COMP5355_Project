@@ -17,13 +17,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/crawl_result.json">
-          <value>
-            <Attribute>
-              <option name="separator" value=":" />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="/crawl_result.txt">
           <value>
             <Attribute>
@@ -80,10 +73,10 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="/webslist_crawler.py">
+        <entry key="/top240.csv">
           <value>
             <Attribute>
-              <option name="separator" value=":" />
+              <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>

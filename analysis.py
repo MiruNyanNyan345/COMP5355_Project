@@ -69,6 +69,8 @@ def expiry_analysis(cookie_type, cookie_total_seconds):
 
 def same_domain_analysis(website, domains_lst):
     same_domain = 0
+    if len(domains_lst) == 0:
+        return 1
     for domain in domains_lst:
         if set(website.split('.')).intersection(set(domain.split('.'))):
             same_domain += 1
@@ -76,10 +78,14 @@ def same_domain_analysis(website, domains_lst):
 
 
 def httpOnly_analysis(https_lst):
+    if len(https_lst) == 0:
+        return 1
     return sum(https_lst) / len(https_lst)
 
 
 def secure_analysis(secure_lst):
+    if len(secure_lst) == 0:
+        return 1
     return sum(secure_lst) / len(secure_lst)
 
 
