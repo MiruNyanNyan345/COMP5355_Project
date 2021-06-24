@@ -17,3 +17,13 @@
 * Grading each of the website according to whether the website is following the rules of GDPR to set the cookies on their website
 
 ## How to use it?
+⭐️ Recommended to use MacOS
+### Top-n Website Collection
+1. Open "website_crawler.py" and 
+2. Change "top200_websites = table[:240]" the number to the number of most popular website that you want to analyze.
+3. Open terminal and go into the corresponding path
+4. Type "python3.7 website_crawler.py"
+
+### Cookies Analyzing
+1. Open terminal and go into the corresponding path
+2. Type "python3.7 main.py"
